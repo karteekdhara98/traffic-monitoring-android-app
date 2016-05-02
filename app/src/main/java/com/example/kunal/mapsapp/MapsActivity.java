@@ -2,22 +2,13 @@ package com.example.kunal.mapsapp;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.graphics.Camera;
-import android.location.Criteria;
 import android.location.Location;
+import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.os.Bundle;
-import android.location.LocationManager;
 
-import retrofit.Callback;
-import retrofit.RestAdapter;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
-
-
-import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -26,10 +17,12 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.util.List;
+import retrofit.Callback;
+import retrofit.RestAdapter;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, LocationListener {
 
@@ -37,13 +30,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
 
-    public static final String ROOT_URL = "http://simplifiedcoding.16mb.com/";
+    public static final String ROOT_URL = "http://jsonplaceholder.typicode.com/";
 
     //Strings to bind with intent will be used to send data to other activity
-    public static final String KEY_BOOK_ID = "key_book_id";
-    public static final String KEY_BOOK_NAME = "key_book_name";
-    public static final String KEY_BOOK_PRICE = "key_book_price";
-    public static final String KEY_BOOK_STOCK = "key_book_stock";
+//   public static final String KEY_BOOK_ID = "key_book_id";
+//    public static final String KEY_BOOK_NAME = "key_book_name";
+//    public static final String KEY_BOOK_PRICE = "key_book_price";
+//    public static final String KEY_BOOK_STOCK = "key_book_stock";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,9 +62,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         HttpRequest api = adapter.create(HttpRequest.class);
 
         //Defining the method
-        api.getBooks(new Callback<List<ResponseData>>() {
+        api.getBooks(new Callback<ResponseData>() {
             @Override
-            public void success(List<ResponseData> list, Response response) {
+            public void success(ResponseData data, Response response) {
             }
 
             @Override
