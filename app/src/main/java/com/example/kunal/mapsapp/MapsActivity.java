@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -22,22 +23,28 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
-import retrofit.Callback;
-import retrofit.RestAdapter;
-import retrofit.RetrofitError;
-import retrofit.client.Response;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, LocationListener, GoogleMap.OnMarkerClickListener {
 
     private GoogleMap mMap;
+    private int btuser;
+    private int btid;
+    private String str;
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
     private LatLng loc1, loc2, loc3, loc4;
     private int state = 0;
     private int beta_val;
     private Marker mark1, mark2, mark3, mark4, mark;
-    public static final String ROOT_URL = "http://jsonplaceholder.typicode.com/";
+    public static final String ROOT_URL = "http://trafficmonitoring.pythonanywhere.com/";
 
     //Strings to bind with intent will be used to send data to other activity
 //   public static final String KEY_BOOK_ID = "key_book_id";
@@ -55,21 +62,34 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         //Creating a rest adapter
-        RestAdapter adapter = new RestAdapter.Builder()
-                .setEndpoint(ROOT_URL)
+        Gson gson = new GsonBuilder()
+                .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+                .create();
+
+        Retrofit adapter = new Retrofit.Builder()
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .baseUrl(ROOT_URL)
                 .build();
         //Creating an object of our api interface
         HttpRequest api = adapter.create(HttpRequest.class);
         //Defining the method
-        api.getBooks(new Callback<ResponseData>() {
+        Call<ResponseData> call = api.getData();
+        call.enqueue(new Callback<ResponseData>() {
             @Override
-            public void success(ResponseData data, Response response) {
+            public void onResponse(Call<ResponseData> call, Response<ResponseData> response) {
+                ResponseData d = response.body();
+                Log.d("API", "Count: " + d.getCount());
             }
 
             @Override
-            public void failure(RetrofitError error) {
+            public void onFailure(Call<ResponseData> call, Throwable t) {
+                t.getMessage();
+                // Log error here since request failed
             }
         });
+
+
+
     }
 
     @Override
