@@ -2,23 +2,15 @@ package com.example.dk.mapsviabt;
 /**
  * ------------------------------------------------------------------------------
  * ------------------------------------------------------------------------------
- * The user clicks on markers to select initial and final points
- * First marker touched is the initial one and the second one is final
- * Then the app communicates with the server and draws the best path between them
- * If the user presses back button after selecting two markers everything gets reset
- * If the user presses a third marker, the first two markers get unselected and the third marker
- * becomes the initial point
+ * This android app has been created as a part of the traffic monitoring project
+ * at IIT Madras. 
  * ------------------------------------------------------------------------------
- * IS WORKING-
- * 1)LOCATION
- * 2)MARKERS AND LATLNG ARRAYLIST
+ * Created by Karteek Dhara
  * ------------------------------------------------------------------------------
- * TO BE CHECKED-
- * 1)SERVER COMMUNICATION - CHECK IF POST REQUEST IS DOING THE RIGHT THING
- * 2)GEODESIC TRUE/FALSE
+ * FIRST VERSION - WORKING WORKING WORKING!!
  * ------------------------------------------------------------------------------
  * TO BE ADDED-
- * EXTRA METHODS FOR BETTER PERFORMANCE UNDER CORNER CASES
+ * EXTRA METHODS FOR BETTER USER EXPERIENCE
  * ------------------------------------------------------------------------------
  * ------------------------------------------------------------------------------
  */
@@ -52,6 +44,7 @@ import java.util.List;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private GoogleMap mMap;
+
     /**
      * devpos is an ArrayList containing LatLng of all devices
      * devices is an ArrayList of markers at the locations in devpos
@@ -61,14 +54,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private ArrayList<LatLng> devpos = new ArrayList();
     private ArrayList<Marker> devices = new ArrayList<Marker>();
     private ArrayList<LatLng> route = new ArrayList();
-    private double inlat = 0.0, inlong = 0.0, finlat = 0.0,  finlong = 0.0;
+   // private double inlat = 0.0, inlong = 0.0, finlat = 0.0,  finlong = 0.0;
     int state = 0, errorcode=0;
     /*
      *errorcode=2 GET-route failure HUE_YELLOW
      *errorcode=1 GET-markers failure
      */
-    List<Double> initialpos = Arrays.asList(inlat,inlong);
-    List<Double> finalpos = Arrays.asList(finlat,finlong);
+    List<Double> initialpos = Arrays.asList(0.0,0.0);
+    List<Double> finalpos = Arrays.asList(0.0,0.0);
     String ROOT_URL = "http://trafficmonitoring.pythonanywhere.com/";
     PolylineOptions polylineOptions;
 
@@ -83,28 +76,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         /**
          * Getting node locations from server
          */
-        RestAdapter restAdapter = new RestAdapter.Builder().setEndpoint(ROOT_URL).build();
-        HttpRequest api = restAdapter.create(HttpRequest.class);
-        api.getMarkers(new Callback<ServerData>() {
-            @Override
-            public void success(ServerData serverData, Response response) {
-                int i=0;
-                for(List<Double> loc : serverData.getPointList()){
-                    devpos.add(i,new LatLng(loc.get(0),loc.get(1)));
-                }
-            }
-
-            @Override
-            public void failure(RetrofitError error) {
-                errorcode=1;
-            }
-        });
-    }
+        }
     //This method is called in onMarkerClick along with drawroute()
-    private void putData(){
+    private void putData(List<Double> inipo,List<Double> finipo){
+        String inpo ='['+ inipo.get(0).toString()+','+inipo.get(1).toString()+']';
+        String finpo = '['+finipo.get(0).toString()+','+finipo.get(1).toString()+']';
+
         RestAdapter restAdapter = new RestAdapter.Builder().setEndpoint(ROOT_URL).build();
         HttpRequest api = restAdapter.create(HttpRequest.class);
-        api.getData(initialpos, finalpos, new Callback<ServerData>() {
+        api.getData(inpo, finpo, new Callback<ServerData>() {
             @Override
             public void success(ServerData serverData, Response response) {
                 int i=0;
@@ -115,7 +95,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                      route.add(i,new LatLng(loc.get(0),loc.get(1)));
                      i++;
                  }
-
+                drawRoute(route);
 
             }
 
@@ -146,15 +126,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        int i = 0;
+
         /**
          * Putting markers on map
          */
-            for (LatLng Location : devpos) {
-                Marker marker = mMap.addMarker(new MarkerOptions().position(Location).title("Device" + i));
-                devices.add(i, marker);
-                i++;
+        RestAdapter restAdapter = new RestAdapter.Builder().setEndpoint(ROOT_URL).build();
+        HttpRequest api = restAdapter.create(HttpRequest.class);
+        api.getMarkers(new Callback<ServerData>() {
+            @Override
+            public void success(ServerData serverData, Response response) {
+                int i=0;
+                for(List<Double> loc : serverData.getPointList()){
+                    devpos.add(i,new LatLng(loc.get(0),loc.get(1)));
+
+                    Marker marker = mMap.addMarker(new MarkerOptions().position(devpos.get(i)).title("Device"+i));
+                    devices.add(i,marker);
+                    i++;
+
+                }
+//
+//                for(int j = 0;j<devpos.size();j++){
+//                    LatLng Location = devpos.get(j);
+//                }
+//                for (LatLng Location : devpos) {
+//                    Marker marker = mMap.addMarker(new MarkerOptions().position(Location).title("Device" + j));
+//                    devices.add(j, marker);
+//                    j++;}
+
             }
+
+
+            @Override
+            public void failure(RetrofitError error) {
+                errorcode=1;
+            }
+        });
+
+
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -177,18 +185,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (state < 2) {
             marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
             if (state == 0) {
-                inlat = markloc.latitude;
-                inlong = markloc.longitude;
+                initialpos.set(0,markloc.latitude);
+                initialpos.set(1,markloc.longitude);
                 state = 1;
                 marker.setSnippet("Initial");
             } else if (state == 1) {
 
-                finlat = markloc.latitude;
-                finlong = markloc.longitude;
+                finalpos.set(0,markloc.latitude);
+                finalpos.set(1,markloc.longitude);
                 state = 2;
                 marker.setSnippet("Destination");
-                putData();
-                drawRoute();
+                putData(initialpos, finalpos);
+
             }
         else{//make the third marker the initial point
                 state=0;
@@ -199,8 +207,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     mark.setSnippet("");
                 }
                 marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
-                inlat = markloc.latitude;
-                inlong = markloc.longitude;
+                initialpos.set(0,markloc.latitude);
+                initialpos.set(1,markloc.longitude);
                 state = 1;
                 marker.setSnippet("Initial");
             }
@@ -218,15 +226,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
                 marker.setSnippet("");
         }
-            inlat=0.0;
-            inlong = 0.0;
-            finlat = 0.0;
-            finlong = 0.0;
+            initialpos.set(0,0.0);
+            initialpos.set(1,0.0);
+            finalpos.set(0,0.0);
+            finalpos.set(1,0.0);
             route.clear();
 
     }}
 
-    private void drawRoute(){
+    private void drawRoute(List<LatLng> route){
         polylineOptions = new PolylineOptions();
         polylineOptions.color(Color.BLUE);
         polylineOptions.width(5);
@@ -237,3 +245,4 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 }
+
