@@ -12,11 +12,11 @@ import retrofit.http.Query;
 
 //The url for all these is same currently but will be changed if necessary.
 public interface HttpRequest {
-    @GET("/api/?format=json")
+    @GET("/device_list")
     void getMarkers(Callback<ServerData> cb);
-    @GET("/api/?format=json")
-    void getData(@Query("initial_point")List<Double> initialPoint,
-                 @Query("final_point")List<Double> finalPoint, Callback<ServerData> cb);
+    @GET("/")
+    void getData(@Query("initialPoint[]")String initialPoint,
+                 @Query("finalPoint[]")String finalPoint, Callback<ServerData> ucb);
 
 
 }
